@@ -86,27 +86,25 @@ def get_normal_lines(edges, break_point, number_of_normals):
     points.append(points[0])
     
     normal_lines = []
+    varied_points = []
     for i in range(len(points) - 1):
         # calculate normal gradient for edge point
         point = points[i]
-        diff_x = break_point[0] - point[0]
-        diff_y = break_point[1] - point[1]
-        if diff_x == 0 or diff_y == 0:
+        gradient = get_gradient(point, break_point)
+        if gradient == None:
             continue
-        gradient = diff_y / diff_x
         normal_gradient = -1/gradient
         
         # get equation for next line
         point = points[i + 1]
-        diff_x = break_point[0] - point[0]
-        diff_y = break_point[1] - point[1]
-        if diff_x == 0 or diff_y == 0:
+        gradient2 = get_gradient(point, break_point)
+        if gradient == None:
             continue
-        gradient2 = diff_y / diff_x
         y_intercept2 = point[1] - (gradient2 * point[0])
 
         line_points = get_line_points(break_point, points[i], number_of_normals)
-        
+
+        temp = []
         # get intersection coord between normal line and second line for each point on line
         for i in range(len(line_points) - 1):
             point = line_points[i]
@@ -117,11 +115,38 @@ def get_normal_lines(edges, break_point, number_of_normals):
             new_x = (gradient * (y_intercept2 - y_intercept)) / (-1 - (gradient2 * gradient))
             new_y = (gradient2 * new_x) + y_intercept2
             new_point = (new_x, new_y)
-            normal_lines.append([point, new_point])
+
+            # move point and new point along normals by variation to change shape of region
+            variation = random.randint(1, 10)
+
+            point_normal_gradient = normal_gradient
+            grad = get_gradient(new_point, break_point)
+            if grad == 0 or grad == None:
+                continue
+            new_point_normal_gradient = -1 / grad
+            diff_x = new_point[0] - point[0]
+            diff_y = new_point[1] - point[1]
+            magnitude = math.sqrt(diff_x ** 2 + diff_y ** 2)
+            scale_factor = variation / magnitude
+            scale_x = diff_x * scale_factor
+            scale_y = diff_y * scale_factor
+            altered_point = (point[0] + scale_x, point[1] + scale_y)
+            normal_lines.append([altered_point, new_point])
+            temp.append(altered_point)
             #draw.ellipse([new_point, (new_point[0] + 1, new_point[1] + 1)], fill='green')
+        varied_points.append(temp)
+        temp = []
 
     print(f"Generated {number_of_normals} lines between all the breakage lines")
-    return normal_lines
+    return normal_lines, varied_points
+
+def get_gradient(a, b):
+    x = b[0] - a[0]
+    y = b[1] - a[1]
+    try:
+        return y / x
+    except:
+        return None
 
 def main():
     dimensions = (1000, 1000)
@@ -135,13 +160,20 @@ def main():
     im = Image.new('RGB', dimensions, (255, 255, 255))
     draw = ImageDraw.Draw(im)
     # draw lines from break_point to each edge point
-    for edge in edge_points:
+    '''for edge in edge_points:
         for point in edge:
-            draw.line([break_point, point], fill=line_color)
+            draw.line([break_point, point], fill=line_color)'''
     # draw lines for each break point on each line
-    for line in get_normal_lines(edge_points, break_point, breakage_points_per_line):
+    normal_lines, line_points = get_normal_lines(edge_points, break_point, breakage_points_per_line)
+    for line in normal_lines:
         draw.line(line, fill=line_color)
+
+    # draw lines emitting from break point
+    for line in line_points:
+        for x in range(len(line) - 1):
+            draw.line([line[x], line[x + 1]], fill='black')
     im.save('output.png')
 
 if __name__ == '__main__':
     main()
+        
