@@ -126,7 +126,7 @@ def get_normal_lines(edges, break_point, number_of_normals):
 def main():
     dimensions = (1000, 1000)
     breakage_lines = 50
-    breakge_points_per_line = 20
+    breakage_points_per_line = 20
     break_point = (500, 500)
     line_color = 'black'
 
@@ -139,7 +139,7 @@ def main():
         for point in edge:
             draw.line([break_point, point], fill=line_color)
     # draw lines for each break point on each line
-    for line in get_normal_lines(edge_points, break_point, breakge_points_per_line):
+    for line in get_normal_lines(edge_points, break_point, breakage_points_per_line):
         draw.line(line, fill=line_color)
     im.save('output.png')
 
